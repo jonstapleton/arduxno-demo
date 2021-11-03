@@ -177,12 +177,18 @@ static int load(Uxn *u, char *filepath) {
 
 Uxn u;
 
+#if defined(BUILTIN_SDCARD)
+  const int chipSelect = BUILTIN_SDCARD; // use the builtin Teensy 4.1 SD card
+#else
+  const int chipSelect = 10; // This is the usual pin for Arduino boards, use 53 for Arduino Mega
+#endif
+
 void setup() {
   Serial.begin(115200);
   while (!Serial) {};
 
   DEBUG("SD card INIT...");
-  if (!SD.begin()) {
+  if (!SD.begin(chipSelect)) {
     DEBUG("SD card INIT FAILED! Halting");
     while (1);
   }
@@ -221,9 +227,6 @@ void setup() {
   }
 
   run(&u);
-
 }
 
-void loop() {
-  Serial.printf("Success!!");
-}
+void loop() {} // This is empty because run() is a loop, we never get here.
