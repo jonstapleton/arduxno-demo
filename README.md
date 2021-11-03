@@ -24,7 +24,7 @@ Currently only tested on a WeAct BlackPill v3, which uses an STM32F411CE MCU. A 
 
 Any MCU or dev board supported by the Arduino ecosystem should work, provided that the MCU has _more than_ 64KiB of RAM. Standard STM32F103-based BluePill boards might not work, as many only have 64KiB. (There are variants with 128KiB.) Most AVR-based boards (Arduino Uno, Mega, Nano, etc.) also do not have enough RAM.
 
-I have not tested this with PlatformIO, Arduino IDE 2.0, or any other tools. I've only used Arduino 1.8.
+This PlatformIO project contains configuration for the Teensy 4.1, a generic STM32, and a BlackPill F401CE. These configurations are untested. 
 
 ## Getting Started
 
@@ -33,6 +33,8 @@ I have not tested this with PlatformIO, Arduino IDE 2.0, or any other tools. I'v
 3. Connect your board's default UART interface (RX/TX pins, native USB serial, etc.) to some console, so that you can see debugging messages when the board boots
 4. Place a Uxn ROM named "`uxn-test.rom`" in the root directory of an SD card, and insert the card into the adapter
 5. Upload ArdUxno-demo to your board
+
+* Using PlatformIO: `pio upload --board blackpill_f401ce`
 
 ## Moving Forward
 
