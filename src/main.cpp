@@ -28,13 +28,44 @@
 #include <SPI.h>
 #include <SD.h>
 
+// Screen stuff
+extern "C" {
+    #include "devices/ppu.h"
+}
+#include <TFT_eSPI.h> // the ESP32 port uses this library, which is also compatible with STM32 processors. Not sure if it works with Teensy
+
+TFT_eSPI tft = TFT_eSPI();
+TFT_eSprite spr = TFT_eSprite(&tft);
+const int hor = 40, ver = 30;
+
+static Ppu *ppu;
+static Uint8 reqdraw = 0;
+
+static Uint8 uxn_font[][8] = {	// there is already a variable named "font" in TFT_eSPI.h
+	{0x00, 0x7c, 0x82, 0x82, 0x82, 0x82, 0x82, 0x7c},
+	{0x00, 0x30, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10},
+	{0x00, 0x7c, 0x82, 0x02, 0x7c, 0x80, 0x80, 0xfe},
+	{0x00, 0x7c, 0x82, 0x02, 0x1c, 0x02, 0x82, 0x7c},
+	{0x00, 0x0c, 0x14, 0x24, 0x44, 0x84, 0xfe, 0x04},
+	{0x00, 0xfe, 0x80, 0x80, 0x7c, 0x02, 0x82, 0x7c},
+	{0x00, 0x7c, 0x82, 0x80, 0xfc, 0x82, 0x82, 0x7c},
+	{0x00, 0x7c, 0x82, 0x02, 0x1e, 0x02, 0x02, 0x02},
+	{0x00, 0x7c, 0x82, 0x82, 0x7c, 0x82, 0x82, 0x7c},
+	{0x00, 0x7c, 0x82, 0x82, 0x7e, 0x02, 0x82, 0x7c},
+	{0x00, 0x7c, 0x82, 0x02, 0x7e, 0x82, 0x82, 0x7e},
+	{0x00, 0xfc, 0x82, 0x82, 0xfc, 0x82, 0x82, 0xfc},
+	{0x00, 0x7c, 0x82, 0x80, 0x80, 0x80, 0x82, 0x7c},
+	{0x00, 0xfc, 0x82, 0x82, 0x82, 0x82, 0x82, 0xfc},
+	{0x00, 0x7c, 0x82, 0x80, 0xf0, 0x80, 0x82, 0x7c},
+	{0x00, 0x7c, 0x82, 0x80, 0xf0, 0x80, 0x80, 0x80}};
+
 #define DBG 1
 #define DEBUG(s) if(DBG){Serial.println(s);}
 
 // TODO: Add a rom selection menu or something
 char ROMNAME[] = "uxn-test.rom";
 
-static Device *devsystem, *devconsole;
+static Device *devsystem, *devconsole, *devscreen;
 
 static int error(char *msg, const char *err) {
   //fprintf(stderr, "Error %s: %s\n", msg, err);
@@ -111,6 +142,66 @@ static int file_talk(Device *d, Uint8 b0, Uint8 w) {
   return 1;
 }
 
+// More screen stuff adapted from https://github.com/max22-/uxn-esp32/blob/esp32/src/main.cpp
+static void
+inspect(Ppu *p, Uint8 *stack, Uint8 wptr, Uint8 rptr, Uint8 *memory)
+{
+	Uint8 i, x, y, b;
+	for(i = 0; i < 0x20; ++i) { /* stack */
+		x = ((i % 8) * 3 + 1) * 8, y = (i / 8 + 1) * 8, b = stack[i];
+		ppu_1bpp(p, 1, x, y, uxn_font[(b >> 4) & 0xf], 1 + (wptr == i) * 0x7, 0, 0);
+		ppu_1bpp(p, 1, x + 8, y, uxn_font[b & 0xf], 1 + (wptr == i) * 0x7, 0, 0);
+	}
+	/* return pointer */
+	ppu_1bpp(p, 1, 0x8, y + 0x10, uxn_font[(rptr >> 4) & 0xf], 0x2, 0, 0);
+	ppu_1bpp(p, 1, 0x10, y + 0x10, uxn_font[rptr & 0xf], 0x2, 0, 0);
+	for(i = 0; i < 0x20; ++i) { /* memory */
+		x = ((i % 8) * 3 + 1) * 8, y = 0x38 + (i / 8 + 1) * 8, b = memory[i];
+		ppu_1bpp(p, 1, x, y, uxn_font[(b >> 4) & 0xf], 3, 0, 0);
+		ppu_1bpp(p, 1, x + 8, y, uxn_font[b & 0xf], 3, 0, 0);
+	}
+	for(x = 0; x < 0x10; ++x) { /* guides */
+		ppu_pixel(p, 1, x, p->height / 2, 2);
+		ppu_pixel(p, 1, p->width - x, p->height / 2, 2);
+		ppu_pixel(p, 1, p->width / 2, p->height - x, 2);
+		ppu_pixel(p, 1, p->width / 2, x, 2);
+		ppu_pixel(p, 1, p->width / 2 - 0x10 / 2 + x, p->height / 2, 2);
+		ppu_pixel(p, 1, p->width / 2, p->height / 2 - 0x10 / 2 + x, 2);
+	}
+}
+
+void
+redraw(Uxn* u)
+{
+	if(devsystem->dat[0xe])
+		inspect(ppu, u->wst.dat, u->wst.ptr, u->rst.ptr, u->ram.dat);
+	spr.pushSprite(0, 0);
+	reqdraw = 0;
+}
+
+static int
+screen_talk(Device *d, Uint8 b0, Uint8 w)
+{
+	if(w && b0 == 0xe) {
+		Uint16 x = peek16(d->dat, 0x8);
+		Uint16 y = peek16(d->dat, 0xa);
+		Uint8 layer = d->dat[0xe] >> 4 & 0x1;
+		ppu_pixel(ppu, layer, x, y, d->dat[0xe] & 0x3);
+		reqdraw = 1;
+	} else if(w && b0 == 0xf) {
+		Uint16 x = peek16(d->dat, 0x8);
+		Uint16 y = peek16(d->dat, 0xa);
+		Uint8 layer = d->dat[0xf] >> 0x6 & 0x1;
+		Uint8 *addr = &d->mem[peek16(d->dat, 0xc)];
+		if(d->dat[0xf] >> 0x7 & 0x1)
+			ppu_2bpp(ppu, layer, x, y, addr, d->dat[0xf] & 0xf, d->dat[0xf] >> 0x4 & 0x1, d->dat[0xf] >> 0x5 & 0x1);
+		else
+			ppu_1bpp(ppu, layer, x, y, addr, d->dat[0xf] & 0xf, d->dat[0xf] >> 0x4 & 0x1, d->dat[0xf] >> 0x5 & 0x1);
+		reqdraw = 1;
+	}
+    return 1;
+}
+
 
 // TODO: RTC support?
 //static int datetime_talk(Device *d, Uint8 b0, Uint8 w) {
@@ -130,6 +221,7 @@ static int file_talk(Device *d, Uint8 b0, Uint8 w) {
 //  (void)w;
 //  return 1;
 //}
+
 
 static int nil_talk(Device *d, Uint8 b0, Uint8 w) {
   (void)d;
@@ -152,13 +244,19 @@ static int console_input(Uxn *u, char c) {
 }
 
 static void run(Uxn *u) {
-  Uint16 vec;
-  //while((!u->dev[0].dat[0xf]) && (read(0, &devconsole->dat[0x2], 1) > 0)) {
-  while ((!u->dev[0].dat[0xf]) && ((*(&devconsole->dat[0x2]) = Serial.read()) != -1)) { // Hope this works :P
-    vec = peek16(devconsole->dat, 0);
-    if (!vec) vec = u->ram.ptr; /* continue after last BRK */
-    uxn_eval(u, vec);
-  }
+    Uint16 vec;
+
+    redraw(u);
+    //while((!u->dev[0].dat[0xf]) && (read(0, &devconsole->dat[0x2], 1) > 0)) {
+    while ((!u->dev[0].dat[0xf]) && ((*(&devconsole->dat[0x2]) = Serial.read()) != -1)) { // Hope this works :P
+        vec = peek16(devconsole->dat, 0);
+        if (!vec) vec = u->ram.ptr; /* continue after last BRK */
+        uxn_eval(u, vec);
+
+        // update the screen
+        if(reqdraw)
+			redraw(u);
+    }
 }
 
 static int load(Uxn *u, char *filepath) {
@@ -185,6 +283,17 @@ Uxn u;
 
 void setup() {
   Serial.begin(115200);
+
+    // Set up tft screen
+    tft.init();
+	tft.setRotation(3);
+	tft.fillScreen(TFT_BLACK);
+	tft.setCursor(0, 0);
+	tft.setTextColor(TFT_GREEN);
+	spr.setColorDepth(4);
+	if(spr.createSprite(8 * hor, 8 * ver) == nullptr) {
+		error("tTFT_eSPI", "Cannot create sprite");
+	}
   while (!Serial) {};
 
   DEBUG("SD card INIT...");
@@ -201,7 +310,7 @@ void setup() {
 
   /* system   */ devsystem = uxn_port(&u, 0x0, system_talk);
   /* console  */ devconsole = uxn_port(&u, 0x1, console_talk);
-  /* empty    */ uxn_port(&u, 0x2, nil_talk);
+  /* screen   */ devscreen = uxn_port(&u, 0x2, screen_talk);
   /* empty    */ uxn_port(&u, 0x3, nil_talk);
   /* empty    */ uxn_port(&u, 0x4, nil_talk);
   /* empty    */ uxn_port(&u, 0x5, nil_talk);
@@ -225,6 +334,12 @@ void setup() {
     error("Init", "Failed");
     while (1);
   }
+
+    /* Write screen size to dev/screen */
+    poke16(devscreen->dat, 2, ppu->width);
+	poke16(devscreen->dat, 4, ppu->height);
+	tft.println("Starting Uxn in 2 seconds");
+	delay(2000);
 
   run(&u);
 }
