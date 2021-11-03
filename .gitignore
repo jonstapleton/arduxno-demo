@@ -5,6 +5,8 @@
 .vscode/ipch
 .vscode*
 .vscode/*
+.pio/*
+.pio
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/launch.json
