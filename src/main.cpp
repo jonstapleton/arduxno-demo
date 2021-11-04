@@ -34,7 +34,7 @@
 // TODO: Add a rom selection menu or something
 char ROMNAME[] = "uxn-test.rom";
 
-static Device *devsystem, *devconsole;
+static Device *devsystem, *devconsole, *devctrl;
 
 static int error(char *msg, const char *err) {
   //fprintf(stderr, "Error %s: %s\n", msg, err);
@@ -56,6 +56,9 @@ static void inspect(Stack *s, char *name) {
     Serial.printf("\n");
   }
 }
+
+// Controller stuff
+
 
 static int system_talk(Device *d, Uint8 b0, Uint8 w) {
   if (!w) { /* read */
@@ -84,6 +87,17 @@ static int console_talk(Device *d, Uint8 b0, Uint8 w) {
     //write(b0 - 0x7, (char *)&d->dat[b0], 1);
     Serial.write((char *)&d->dat[b0], 1); // All writes are directed to Serial
   return 1;
+}
+
+// Controller things
+char pins = 0x00; // all pins start off
+
+static char check_pins() {
+    return 0x01;
+}
+
+static void doctrl() {
+    Serial.printf("Got controller input");
 }
 
 
@@ -152,13 +166,21 @@ static int console_input(Uxn *u, char c) {
 }
 
 static void run(Uxn *u) {
-  Uint16 vec;
+    Uint16 vec;
   //while((!u->dev[0].dat[0xf]) && (read(0, &devconsole->dat[0x2], 1) > 0)) {
-  while ((!u->dev[0].dat[0xf]) && ((*(&devconsole->dat[0x2]) = Serial.read()) != -1)) { // Hope this works :P
-    vec = peek16(devconsole->dat, 0);
-    if (!vec) vec = u->ram.ptr; /* continue after last BRK */
-    uxn_eval(u, vec);
-  }
+//   while ((!u->dev[0].dat[0xf]) && ((*(&devconsole->dat[0x2]) = Serial.read()) != -1)) { // Hope this works :P
+    while(!devsystem->dat[0xf]) {
+        vec = peek16(devconsole->dat, 0);
+        if (!vec) vec = u->ram.ptr; /* continue after last BRK */
+        uxn_eval(u, vec);
+
+        // controller event poll
+        while(check_pins() != pins) { // If the controller state has changed...
+            doctrl();
+            uxn_eval(u, devctrl->vector); // run the controller vector defined in the ROM
+            devctrl->dat[3] = 0;
+        }
+    }
 }
 
 static int load(Uxn *u, char *filepath) {
