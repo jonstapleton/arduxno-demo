@@ -19,6 +19,7 @@ int is_event(Pin_Event *e) {
     get_pins(&h);
     if(h.state != previous) {
         e->snapshot = h.state;
+        e->type = PINDOWN;
         previous = h.state;
         return 1;
     }
@@ -40,6 +41,7 @@ int setup_hardware() {
     for(int i=0;i<8;i++) {
         pinMode(h.pins[i], INPUT_PULLUP);
     }
+    pinMode(13, OUTPUT);
 
     // set the initial bitfield based on pin state
     get_pins(&h);
@@ -50,7 +52,7 @@ int get_pins(Hardware *h) {
     unsigned char bitfield = 0x00;
     for(int i=0; i<8; /* always 8 -- it has to iterate over a byte! */ i++) {
         bitfield <<= 1;
-        bitfield += digitalRead(h->pins[i]);
+        bitfield += ~digitalRead(h->pins[i]);
     }
     h->state = bitfield; // push the bitfield to the hardware struct
     return 1; // success

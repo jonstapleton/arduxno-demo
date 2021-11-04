@@ -10,10 +10,10 @@
             "includePath": [
                 "/home/octojon/Documents/GitHub/arduxno-demo/include",
                 "/home/octojon/Documents/GitHub/arduxno-demo/src",
-                "/home/octojon/Documents/GitHub/arduxno-demo/lib/Hardware/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SD/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SdFat/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SPI",
+                "/home/octojon/Documents/GitHub/arduxno-demo/lib/Hardware/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/cores/teensy4",
                 "/home/octojon/Documents/GitHub/arduxno-demo/.pio/libdeps/teensy41/TFT_eSPI",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/ADC",
@@ -119,10 +119,10 @@
                 "path": [
                     "/home/octojon/Documents/GitHub/arduxno-demo/include",
                     "/home/octojon/Documents/GitHub/arduxno-demo/src",
-                    "/home/octojon/Documents/GitHub/arduxno-demo/lib/Hardware/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SD/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SdFat/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SPI",
+                    "/home/octojon/Documents/GitHub/arduxno-demo/lib/Hardware/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/cores/teensy4",
                     "/home/octojon/Documents/GitHub/arduxno-demo/.pio/libdeps/teensy41/TFT_eSPI",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/ADC",
