@@ -8,6 +8,7 @@ typedef enum Events {
 typedef struct Hardware {
     unsigned int state:8;
     int pins[8];
+    unsigned int new_data:1;
 } Hardware;
 
 typedef struct Pin_Event {
@@ -21,3 +22,4 @@ int is_event(Pin_Event *e);
 int compare_hardware_state(Hardware *h); // returns 1 if the hardware changed, 0 if it is the same as before
 int setup_hardware();
 int get_pins(Hardware *h);
+int check_hardware();

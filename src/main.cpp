@@ -176,7 +176,9 @@ static int run(Uxn *u) {
         if (!vec) vec = u->ram.ptr; /* continue after last BRK */
         uxn_eval(u, vec);
 
-        Pin_Event event;
+        while(check_hardware()) {
+          Serial.println(millis());
+        }
         // hardware event poll -- *any* hardware interaction
         // while(is_event(&event) != 0) { // while there is an event in the queue...
         //   switch(event.type) {
@@ -190,11 +192,6 @@ static int run(Uxn *u) {
         //       break;
         //   }
         // }
-        if(digitalRead(0) == LOW) {
-          digitalWrite(13, HIGH);
-        } else {
-          digitalWrite(13, LOW);
-        }
     }
 }
 

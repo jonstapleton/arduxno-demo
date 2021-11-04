@@ -11,7 +11,7 @@
 #define PIN_7 6
 #define PIN_8 7
 
-unsigned char previous = 0x00;
+int previous = 0x00;
 Hardware h;
 
 int is_event(Pin_Event *e) {
@@ -56,4 +56,19 @@ int get_pins(Hardware *h) {
     }
     h->state = bitfield; // push the bitfield to the hardware struct
     return 1; // success
+}
+
+int check_hardware() { // TODO: add debounce
+    int bitfield = 0x00;
+    for(int i=0; i<8; /* always 8 -- it has to iterate over a byte! */ i++) {
+        bitfield <<= 1;
+        bitfield += 1 - digitalRead(h.pins[i]); // Flip HIGH to LOW & vice-versa
+    }
+
+    if(previous == bitfield) {
+        return 0;
+    } else {
+        previous = bitfield;
+        return 1;
+    }
 }
