@@ -27,10 +27,9 @@
 
 #include <SPI.h>
 #include <SD.h>
+#include <Bounce2.h>
 
-extern "C" {
-  #include <Hardware.h>
-}
+#include <Hardware.h>
 
 #define DBG 1
 #define DEBUG(s) if(DBG){Serial.println(s);}
@@ -176,8 +175,9 @@ static int run(Uxn *u) {
         if (!vec) vec = u->ram.ptr; /* continue after last BRK */
         uxn_eval(u, vec);
 
-        while(check_hardware()) {
-          Serial.println(millis());
+        Hardware h;
+        while(check_hardware(&h)) {
+          Serial.println(h.state);
         }
         // hardware event poll -- *any* hardware interaction
         // while(is_event(&event) != 0) { // while there is an event in the queue...
@@ -191,6 +191,10 @@ static int run(Uxn *u) {
         //       devctrl->dat[3] = 0; // no idea what this does
         //       break;
         //   }
+        // }
+        // b.update();
+        // if(b.changed()) {
+        //   Serial.println("Got button change");
         // }
     }
 }
@@ -229,8 +233,7 @@ void setup() {
   // }
   // DEBUG("Pins INIT SUCCEEDED");
 
-  pinMode(0, INPUT_PULLUP);
-  pinMode(13, OUTPUT);
+  setup_hardware();
 
   // Set up SD card
   DEBUG("SD card INIT...");
