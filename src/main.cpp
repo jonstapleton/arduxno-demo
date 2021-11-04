@@ -28,6 +28,8 @@
 #include <SPI.h>
 #include <SD.h>
 
+#include <devices/hardware.h>
+
 #define DBG 1
 #define DEBUG(s) if(DBG){Serial.println(s);}
 
@@ -89,16 +91,6 @@ static int console_talk(Device *d, Uint8 b0, Uint8 w) {
   return 1;
 }
 
-// Controller things
-char pins = 0x00; // all pins start off
-
-static char check_pins() {
-    return 0x01;
-}
-
-static void doctrl() {
-    Serial.printf("Got controller input");
-}
 
 
 // TODO: Modify this to access files on the SD card
@@ -123,6 +115,10 @@ static int file_talk(Device *d, Uint8 b0, Uint8 w) {
     poke16(d->dat, 0x2, result);
   }
   return 1;
+}
+
+static int doctrl(Pin_Event *e, int z) {
+
 }
 
 
@@ -165,7 +161,7 @@ static int console_input(Uxn *u, char c) {
   return uxn_eval(u, devconsole->vector);
 }
 
-static void run(Uxn *u) {
+static int run(Uxn *u) {
     Uint16 vec;
   //while((!u->dev[0].dat[0xf]) && (read(0, &devconsole->dat[0x2], 1) > 0)) {
 //   while ((!u->dev[0].dat[0xf]) && ((*(&devconsole->dat[0x2]) = Serial.read()) != -1)) { // Hope this works :P
@@ -174,11 +170,19 @@ static void run(Uxn *u) {
         if (!vec) vec = u->ram.ptr; /* continue after last BRK */
         uxn_eval(u, vec);
 
-        // controller event poll
-        while(check_pins() != pins) { // If the controller state has changed...
-            doctrl();
-            uxn_eval(u, devctrl->vector); // run the controller vector defined in the ROM
-            devctrl->dat[3] = 0;
+        Pin_Event event;
+        // hardware event poll
+        while(event_queue_length(&event) != 0) { // while there is an event in the queue...
+          switch(event.type) {
+            case QUIT:
+              return error("Run", "Quit");
+            case PINUP:
+            case PINDOWN:
+              doctrl(&event, event.type == PINDOWN);
+              uxn_eval(u, devctrl->vector);
+              devctrl->dat[3] = 0;
+              break;
+          }
         }
     }
 }
@@ -249,6 +253,7 @@ void setup() {
   }
 
   run(&u);
+  // quit() // TODO: write quit function
 }
 
 void loop() {} // This is empty because run() is a loop, we never get here.
