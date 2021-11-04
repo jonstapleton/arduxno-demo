@@ -1,4 +1,4 @@
-
+#include <Bounce2.h>
 
 typedef enum Events {
     QUIT,
@@ -6,10 +6,14 @@ typedef enum Events {
     PINDOWN    
 } Event;
 
+typedef struct Controller {
+    Bounce pins[8];
+} Controller;
+
 
 typedef struct Hardware {
     unsigned int state:8;
-    int pins[8];
+    Controller controller;
     unsigned int new_data:1;
 } Hardware;
 
@@ -25,3 +29,5 @@ int compare_hardware_state(Hardware *h); // returns 1 if the hardware changed, 0
 int setup_hardware();
 int get_pins(Hardware *h);
 int check_hardware(Hardware *h);
+int build_controller(Controller *c);
+Bounce make_button(int pin);
