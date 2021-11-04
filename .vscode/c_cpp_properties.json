@@ -10,6 +10,7 @@
             "includePath": [
                 "/home/octojon/Documents/GitHub/arduxno-demo/include",
                 "/home/octojon/Documents/GitHub/arduxno-demo/src",
+                "/home/octojon/Documents/GitHub/arduxno-demo/lib/Hardware/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SD/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SdFat/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SPI",
@@ -118,6 +119,7 @@
                 "path": [
                     "/home/octojon/Documents/GitHub/arduxno-demo/include",
                     "/home/octojon/Documents/GitHub/arduxno-demo/src",
+                    "/home/octojon/Documents/GitHub/arduxno-demo/lib/Hardware/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SD/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SdFat/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/SPI",

@@ -28,7 +28,9 @@
 #include <SPI.h>
 #include <SD.h>
 
-#include <devices/hardware.h>
+extern "C" {
+  #include <Hardware.h>
+}
 
 #define DBG 1
 #define DEBUG(s) if(DBG){Serial.println(s);}
@@ -118,7 +120,10 @@ static int file_talk(Device *d, Uint8 b0, Uint8 w) {
 }
 
 static int doctrl(Pin_Event *e, int z) {
-
+  // push the hardware snapshot to the controller device
+  devctrl->dat[2] = e->snapshot; // I think this sets the button memory port
+  Serial.println("Got controller input");
+  return 1;
 }
 
 
@@ -171,8 +176,8 @@ static int run(Uxn *u) {
         uxn_eval(u, vec);
 
         Pin_Event event;
-        // hardware event poll
-        while(event_queue_length(&event) != 0) { // while there is an event in the queue...
+        // hardware event poll -- *any* hardware interaction
+        while(is_event(&event) != 0) { // while there is an event in the queue...
           switch(event.type) {
             case QUIT:
               return error("Run", "Quit");
@@ -180,7 +185,7 @@ static int run(Uxn *u) {
             case PINDOWN:
               doctrl(&event, event.type == PINDOWN);
               uxn_eval(u, devctrl->vector);
-              devctrl->dat[3] = 0;
+              devctrl->dat[3] = 0; // no idea what this does
               break;
           }
         }
@@ -213,6 +218,15 @@ void setup() {
   Serial.begin(115200);
   while (!Serial) {};
 
+  // Set up hardware
+  DEBUG("Pins INIT...");
+  if(!setup_hardware()){
+    DEBUG("Pins INIT FAILED! Halting...");
+    while(1);
+  }
+  DEBUG("Pins INIT SUCCEEDED");
+
+  // Set up SD card
   DEBUG("SD card INIT...");
   if (!SD.begin(chipSelect)) {
     DEBUG("SD card INIT FAILED! Halting");
