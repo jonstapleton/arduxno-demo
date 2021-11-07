@@ -35,7 +35,7 @@
 #define DEBUG(s) if(DBG){Serial.println(s);}
 
 // TODO: Add a rom selection menu or something
-char ROMNAME[] = "hello-keyboard.rom";
+char ROMNAME[] = "ctrl-test.rom";
 
 static Device *devsystem, *devconsole, *devctrl;
 
@@ -118,13 +118,6 @@ static int file_talk(Device *d, Uint8 b0, Uint8 w) {
   return 1;
 }
 
-static int doctrl(Pin_Event *e, int z) {
-  // push the hardware snapshot to the controller device
-  devctrl->dat[2] = e->snapshot; // I think this sets the button memory port
-  Serial.println("Got controller input");
-  return 1;
-}
-
 
 // TODO: RTC support?
 //static int datetime_talk(Device *d, Uint8 b0, Uint8 w) {
@@ -177,7 +170,16 @@ static int run(Uxn *u) {
 
         Hardware h;
         while(check_hardware(&h)) {
-          Serial.println(h.state);
+          if(h.state != 0) {
+            digitalWrite(13, HIGH);
+          } else {
+            digitalWrite(13, LOW);
+          }
+          
+          // devctrl->dat[2] = h.state;
+          uxn_eval(u, devctrl->vector);
+          // devctrl->dat[2] = 0x00;
+          // devctrl->dat[3] = 0;
         }
         // hardware event poll -- *any* hardware interaction
         // while(is_event(&event) != 0) { // while there is an event in the queue...
@@ -256,7 +258,7 @@ void setup() {
   /* empty    */ uxn_port(&u, 0x5, nil_talk);
   /* empty    */ uxn_port(&u, 0x6, nil_talk);
   /* empty    */ uxn_port(&u, 0x7, nil_talk);
-  /* empty    */ uxn_port(&u, 0x8, nil_talk);
+  /* control  */ devctrl = uxn_port(&u, 0x8, nil_talk);
   /* empty    */ uxn_port(&u, 0x9, nil_talk);
   /* file     */ uxn_port(&u, 0xa, file_talk);
   /* datetime */ //uxn_port(&u, 0xb, datetime_talk);
