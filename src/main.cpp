@@ -35,7 +35,7 @@
 #define DEBUG(s) if(DBG){Serial.println(s);}
 
 // TODO: Add a rom selection menu or something
-char ROMNAME[] = "uxn-test.rom";
+char ROMNAME[] = "test.rom";
 
 static Device *devsystem, *devconsole, *devctrl;
 
