@@ -178,11 +178,6 @@ static int run(Uxn *u) {
         Hardware h;
         while(check_hardware(&h)) {
           Serial.println(h.state);
-          // doctrl();
-          devctrl->dat[2] = h.state;
-          uxn_eval(u, devctrl->vector);
-          devctrl->dat[3] = 0;
-          break;
         }
         // hardware event poll -- *any* hardware interaction
         // while(is_event(&event) != 0) { // while there is an event in the queue...
