@@ -16,7 +16,6 @@
                 "/home/octojon/Documents/GitHub/arduxno-demo/lib/Hardware/src",
                 "/home/octojon/Documents/GitHub/arduxno-demo/.pio/libdeps/teensy41/Bounce2/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/cores/teensy4",
-                "/home/octojon/Documents/GitHub/arduxno-demo/.pio/libdeps/teensy41/TFT_eSPI",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/ADC",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/AccelStepper/src",
                 "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/Adafruit_NeoPixel",
@@ -126,7 +125,6 @@
                     "/home/octojon/Documents/GitHub/arduxno-demo/lib/Hardware/src",
                     "/home/octojon/Documents/GitHub/arduxno-demo/.pio/libdeps/teensy41/Bounce2/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/cores/teensy4",
-                    "/home/octojon/Documents/GitHub/arduxno-demo/.pio/libdeps/teensy41/TFT_eSPI",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/ADC",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/AccelStepper/src",
                     "/home/octojon/.platformio/packages/framework-arduinoteensy/libraries/Adafruit_NeoPixel",
@@ -227,7 +225,7 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=50202",
+                "PLATFORMIO=50203",
                 "__IMXRT1062__",
                 "ARDUINO_TEENSY41",
                 "USB_SERIAL",

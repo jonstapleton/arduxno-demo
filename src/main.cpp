@@ -30,7 +30,7 @@
 #include <Bounce2.h>
 
 #include <Hardware.h>
-
+Bounce b = Bounce();
 #define DBG 1
 #define DEBUG(s) if(DBG){Serial.println(s);}
 
@@ -177,27 +177,17 @@ static int run(Uxn *u) {
           }
           
           // devctrl->dat[2] = h.state;
-          uxn_eval(u, devctrl->vector);
+          // uxn_eval(u, devctrl->vector);
           // devctrl->dat[2] = 0x00;
           // devctrl->dat[3] = 0;
         }
-        // hardware event poll -- *any* hardware interaction
-        // while(is_event(&event) != 0) { // while there is an event in the queue...
-        //   switch(event.type) {
-        //     case QUIT:
-        //       return error("Run", "Quit");
-        //     case PINUP:
-        //     case PINDOWN:
-        //       doctrl(&event, event.type == PINDOWN);
-        //       uxn_eval(u, devctrl->vector);
-        //       devctrl->dat[3] = 0; // no idea what this does
-        //       break;
-        //   }
-        // }
-        // b.update();
-        // if(b.changed()) {
-        //   Serial.println("Got button change");
-        // }
+        b.update();
+        if(b.changed()) {
+          // Serial.println("Got button change");
+          devctrl->dat[2] = 0x02;
+          uxn_eval(u, devctrl->vector);
+          devctrl->dat[3] = 0;
+        }
     }
 }
 
@@ -227,15 +217,10 @@ void setup() {
   Serial.begin(115200);
   while (!Serial) {};
 
-  // Set up hardware
-  // DEBUG("Pins INIT...");
-  // if(!setup_hardware()){
-  //   DEBUG("Pins INIT FAILED! Halting...");
-  //   while(1);
-  // }
-  // DEBUG("Pins INIT SUCCEEDED");
-
   setup_hardware();
+  
+  // simple button setup
+  b.attach(0, INPUT_PULLUP);
 
   // Set up SD card
   DEBUG("SD card INIT...");
